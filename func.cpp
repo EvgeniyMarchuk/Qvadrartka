@@ -1,51 +1,66 @@
 #include "headers.h"
 
-int input_from_file(double *a, double *b, double *c, int *counter2){
+void all_job()
+{
+    int counter_of_str = string_counter();
 
-    //INIT!!!
     FILE *input = NULL;
-    input = fopen("input.txt", "rb");
-    //check input valid
+    input = fopen("input.txt", "r");
+
+    for(int i = 0; i < counter_of_str; i++){
+        double a = NAN, b = NAN, c = NAN;
+
+        int counter = 0, counter2 = 0;
+
+        input_from_file(input, &a, &b, &c, &counter2);
+
+        double x1 = NAN, x2 = NAN;
+        solve(a, b, c, &x1, &x2, &counter, counter2);
+
+        output_in_file(counter, x1, x2);
+    }
+    fclose(input);
+}
+
+
+int string_counter(){
+
+    FILE *input = NULL;
+    input = fopen("input.txt", "r");
+
+    int counter_slash = 0;
+    int ch = getc(input);
+
+    while (ch != EOF){
+        if (ch == '\n')
+            counter_slash++;
+        ch = getc(input);
+    }
+
+    fclose(input);
+
+    return counter_slash + 1;
+}
+
+int input_from_file(FILE *input, double *a, double *b, double *c, int *counter2){
+
 
     if (input == NULL){
 
         printf("Can't use file\n");
         assert (0);
-        //прервать программу
     }
 
     else{
-    //estr = fgets(str , LEN, input);
 
-    *counter2 += fscanf(input, "%lf %lf %lf", a, b, c);
+        *counter2 += fscanf(input, "%lf %lf %lf", a, b, c);
+        //printf("%lf %lf %lf", *a, *b, *c);
 
-    //fclose(input);
-
-    return(*counter2);
+        return(*counter2);
     }
-    fclose(input);
 }
 
-/*void input(double *a, double *b, double *c)
-{
-    int counter2 = 0;
 
-    while (counter2 != 3)
-    {
-        printf("Enter a, b, c (separated by a space):");
-        counter2 += scanf("%lf %lf %lf", a, b, c);
-
-        while (getchar() != '\n')
-            ;
-
-        if (counter2 != 3)
-        {
-            printf("Enterned incorrectly coefficients\n");
-            counter2 = 0;
-        }
-
-    }
-}*/
 
 int linear(double b, double c, double *x1, int *counter){
     if (is_zero(b) && is_zero(c)){
@@ -63,7 +78,7 @@ int linear(double b, double c, double *x1, int *counter){
 
 int kvadratic(double a, double b, double c, double *x1, double *x2, int *counter){
 
-    double discr = sqrt(b*b - 4*a*c);
+    double discr = (b*b - 4*a*c);
 
     if (is_zero(discr) && !(is_zero(a)) && !(is_zero(b)) && !(is_zero(c))){
         *x1 = -b / (2*a);
@@ -100,7 +115,7 @@ int kvadratic(double a, double b, double c, double *x1, double *x2, int *counter
         }
     }
     else if (is_zero(c)){
-        if (b != 0){
+        if (!(is_zero(b))){
         *x1 = 0;
         assert(!(is_zero(a)));
         *x2 = -b / a;
@@ -117,6 +132,7 @@ int kvadratic(double a, double b, double c, double *x1, double *x2, int *counter
     }
     else{
         if (discr > 0){
+            discr = sqrt(discr);
             assert(!(is_zero(a)));
             *x1 = (-b + discr) / (2*a);
             *x2 = (-b - discr) / (2*a);
@@ -133,11 +149,14 @@ int solve(double a, double b, double c, double *x1, double *x2, int *counter, in
     //isfinite (a);
     //assert (x1 != nullptr);
     //if x1 == nullptr
+
     if (counter2 != 3){
         *counter = ERROR_ROOTS;
+
         return(*counter);
     }
     else if (isfinite(a) && isfinite(b) && isfinite(c)){
+
         if (is_zero(a))
 
             return (linear   (b, c, x1, counter));
@@ -146,14 +165,15 @@ int solve(double a, double b, double c, double *x1, double *x2, int *counter, in
             return (kvadratic(a, b, c, x1, x2, counter));
     }
     else{
+
         *counter = ERROR_ROOTS;
         return(*counter);
     }
 }
 
-double compare_two(double num1, double num2){
+/*double compare_two(double num1, double num2){
     return (fabs(num1 - num2) < EPSILON);
-}
+}*/
 
 
 int is_zero(double num)
@@ -165,17 +185,17 @@ int is_zero(double num)
 void output_in_file(int counter, double x1, double x2){
 
     FILE *output;
-    output = fopen("output.txt", "wb");
+    output = fopen("output.txt", "a");
 
     switch(counter){
         case ZERO:
             fprintf(output, "No solutions\n");
             break;
         case ONE_ROOT:
-            fprintf(output, "Корень уравнения: x = %.2f\n", x1);
+            fprintf(output, "The root of equatoin: x = %.2f\n", x1);
             break;
         case TWO_ROOTS:
-            fprintf(output, "Корни уравнения: x1 = %.2f, x2 = %.2f\n", x1, x2);
+            fprintf(output, "The roots of equation: x1 = %.2f, x2 = %.2f\n", x1, x2);
             break;
         case INF:
             fprintf(output, "Any numbers\n");
